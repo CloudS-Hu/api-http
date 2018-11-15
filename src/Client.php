@@ -61,9 +61,10 @@ class Client
      * Client constructor.
      * @param Api $api
      * @param array $config
+     * @param LoggerInterface $logger
      * @throws \Exception
      */
-    public function __construct(Api $api, $config = [])
+    public function __construct(Api $api, $config = [], LoggerInterface $logger = null)
     {
         //先进行api的参数校验
         $api->validate();
@@ -71,25 +72,38 @@ class Client
         $this->params = $api->getParams();
         $this->method = $api->getMethod();
         $this->uri = $api->getUri();
-        $this->baseUri = isset($config['base_uri']) ? $config['base_uri'] : '/';
-        $this->headers = isset($config['headers']) ? $config['headers'] : [
+        $this->baseUri = !empty($config['base_uri']) ? $config['base_uri'] : '/';
+        $this->headers = !empty($config['headers']) ? $config['headers'] : [
             'Accept-Encoding' => 'gzip',
             'Connection' => 'keep-alive'
         ]; // 头部参数
+        mergeInto($this->headers, $api->getHeaders());
         $this->config = [
             'timeout' => isset($config['timeout']) ? $config['timeout'] : 30, // 超时时间
             'connect_timeout' => isset($config['connect_timeout']) ? $config['connect_timeout'] : 3, // 连接超时，单位秒
             'max_retries' => isset($config['max_retries']) ? $config['max_retries'] : 1, // 重试次数
             'retry_interval' => isset($config['retry_interval']) ? $config['retry_interval'] : 1000, // 重试间隔，毫秒
         ];
+        // 日志
+        $this->logger = $logger;
+        // 处理器
         $this->handlerStack = HandlerStack::create();
+        // 创建 httpClient 实例
+        $this->setHttpClient();
     }
 
+    /**
+     * @return Api
+     */
     public function getApi()
     {
         return $this->api;
     }
 
+    /**
+     * @param $baseUri
+     * @return $this
+     */
     public function setBaseUri($baseUri)
     {
         $this->baseUri = $baseUri;
@@ -125,7 +139,7 @@ class Client
             $stream = new StreamHandler($this->logFile, Logger::DEBUG);
             $stream->setFormatter(new LineFormatter(null, null, true, true));
 
-            $this->logger = new Logger('finance');
+            $this->logger = new Logger('api-http');
             $this->logger->pushHandler($stream);
         }
 
@@ -173,9 +187,10 @@ class Client
     }
 
     /**
+     * @return $this
      * @throws \Exception
      */
-    public function getHttpClient()
+    private function setHttpClient()
     {
         $this->pushLog();
         $this->pushRetry();
@@ -187,13 +202,34 @@ class Client
                 'headers' => $this->headers
             ]
         );
+        return $this;
+    }
+
+    /**
+     * @return \GuzzleHttp\ClientInterface
+     */
+    public function getHttpClient()
+    {
+        return $this->httpClient;
     }
 
     /**
      * 发起请求
+     *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Exception
      */
     public function request()
     {
-
+        $response = $this->httpClient->request(
+            $this->method,
+            $this->baseUri . $this->uri,
+            [
+                'form_params' => $this->params,
+                'headers' => $this->headers
+            ]
+        );
+        $body = $response->getBody();
+        return @json_decode($body, true);
     }
 }

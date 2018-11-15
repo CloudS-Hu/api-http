@@ -8,7 +8,7 @@ use Rakit\Validation\Validator;
  * Class Api
  * @package CloudS\Hu\Api\Http
  */
-class Api implements ApiInterface
+class Api
 {
     /** @var array request parameters */
     private $params;
@@ -25,19 +25,31 @@ class Api implements ApiInterface
     /** @var array user defined validate error message */
     private $messages = [];
 
+    /** @var array $headers */
+    private $headers = [];
+
     /**
      * Api constructor.
      * @param string $uri
      * @param array $params
      * @param array $rules
+     * @param array $headers
      * @param string $method
      */
-    public function __construct($uri = '/', $params = [], $rules = [], $method = 'post')
+    public function __construct($uri = '/', $params = [], $rules = [], $headers = [], $method = 'post')
     {
         $this->uri = $uri;
         $this->method = $method;
         $this->params = $params;
         $this->rules = $rules;
+        $this->headers = $headers;
+        $this->messages = [
+            'required' => ':attribute 不能为空！',
+            'numeric' => ':attribute 必须是数字！',
+            'date' => ':attribute 日期格式非法！',
+            'email' => ':attribute 邮箱格式错误！',
+            'in' => ':attribute 值不在允许的范围内！'
+        ];
     }
 
     /**
@@ -54,19 +66,20 @@ class Api implements ApiInterface
     }
 
     /**
-     * @param $messages
+     * @param array $messages
      * @return $this
+     * @throws \Exception
      */
     public function setMessage($messages)
     {
-        $this->messages = $messages;
+        mergeInto($this->messages, $messages);
         return $this;
     }
 
     /**
-     * @param $params
+     * @param array $params
      * @param array $rules
-     * @return $this|ApiInterface
+     * @return $this
      * @throws \Exception
      */
     public function addParams($params, $rules = [])
@@ -77,7 +90,7 @@ class Api implements ApiInterface
     }
 
     /**
-     * @param $rules
+     * @param array $rules
      * @return $this
      * @throws \Exception
      */
@@ -89,7 +102,7 @@ class Api implements ApiInterface
 
     /**
      * @param $uri
-     * @return $this|ApiInterface
+     * @return $this
      */
     public function setUri($uri)
     {
@@ -99,7 +112,7 @@ class Api implements ApiInterface
 
     /**
      * @param $method
-     * @return $this|ApiInterface
+     * @return $this
      */
     public function setMethod($method)
     {
@@ -107,16 +120,44 @@ class Api implements ApiInterface
         return $this;
     }
 
+    /**
+     * @param $headers
+     * @return $this
+     * @throws \Exception
+     */
+    public function setHeaders($headers)
+    {
+        mergeInto($this->headers, $headers);
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    /**
+     * @return array
+     */
     public function getParams()
     {
         return $this->params;
     }
 
+    /**
+     * @return string
+     */
     public function getMethod()
     {
         return $this->method;
     }
 
+    /**
+     * @return string
+     */
     public function getUri()
     {
         return $this->uri;
@@ -128,8 +169,7 @@ class Api implements ApiInterface
      */
     public function validate()
     {
-        $this->filterRules();
-        if (empty($this->params) || empty($this->rules)) {
+        if (empty($this->rules)) {
             return true;
         }
         $validator = new Validator();
@@ -146,17 +186,6 @@ class Api implements ApiInterface
         } else {
             $this->params = $validation->getValidatedData();
             return true;
-        }
-    }
-
-    /**
-     * 过滤无效的 rule 参数
-     */
-    private function filterRules()
-    {
-        $diffKey = array_diff_key($this->rules, $this->params);
-        foreach ($diffKey as $key) {
-            unset($this->rules[$key]);
         }
     }
 }
