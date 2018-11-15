@@ -2,6 +2,7 @@
 
 namespace CloudS\Hu\Api\Http;
 
+use CloudS\Hu\Api\Http\exceptions\BadRequestException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
@@ -221,15 +222,19 @@ class Client
      */
     public function request()
     {
-        $response = $this->httpClient->request(
-            $this->method,
-            $this->baseUri . $this->uri,
-            [
-                'form_params' => $this->params,
-                'headers' => $this->headers
-            ]
-        );
-        $body = $response->getBody();
-        return @json_decode($body, true);
+        try {
+            $response = $this->httpClient->request(
+                $this->method,
+                $this->baseUri . $this->uri,
+                [
+                    'form_params' => $this->params,
+                    'headers' => $this->headers
+                ]
+            );
+            $body = $response->getBody();
+            return @json_decode($body, true);
+        } catch (\Exception $e) {
+            throw new BadRequestException($e->getMessage(), $e->getCode());
+        }
     }
 }

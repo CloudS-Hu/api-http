@@ -56,7 +56,7 @@ class Api
      * @param $name
      * @param $value
      * @param string $rule
-     * @return $this|ApiInterface
+     * @return $this
      */
     public function addParam($name, $value, $rule = '')
     {
