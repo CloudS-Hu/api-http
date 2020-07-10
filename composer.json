@@ -1,12 +1,7 @@
 {
     "name": "clouds-hu/api-http",
     "description": "The api http",
-    "repositories": {
-        "packagist": {
-            "type": "composer",
-            "url": "https://mirrors.aliyun.com/composer/"
-        }
-    },
+    "license": "MIT",
     "authors": [
         {
             "name": "clouds.hu",
