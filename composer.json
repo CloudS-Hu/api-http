@@ -1,6 +1,12 @@
 {
     "name": "clouds-hu/api-http",
     "description": "The api http",
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer/"
+        }
+    },
     "authors": [
         {
             "name": "clouds.hu",
@@ -11,7 +17,8 @@
         "php": ">=7.0",
         "guzzlehttp/guzzle": "~6.0",
         "monolog/monolog": ">=1.23.0",
-        "rakit/validation": "^0.22.0"
+        "rakit/validation": "^0.22.0",
+        "ext-json": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "*"

@@ -2,8 +2,6 @@
 
 namespace CloudS\Hu\Api\Http;
 
-use Rakit\Validation\Validator;
-
 /**
  * Class Api
  * @package CloudS\Hu\Api\Http
@@ -43,13 +41,6 @@ class Api
         $this->params = $params;
         $this->rules = $rules;
         $this->headers = $headers;
-        $this->messages = [
-            'required' => ':attribute 不能为空！',
-            'numeric' => ':attribute 必须是数字！',
-            'date' => ':attribute 日期格式非法！',
-            'email' => ':attribute 邮箱格式错误！',
-            'in' => ':attribute 值不在允许的范围内！'
-        ];
     }
 
     /**
@@ -172,20 +163,8 @@ class Api
         if (empty($this->rules)) {
             return true;
         }
-        $validator = new Validator();
-        $validation = $validator->make($this->params, $this->rules, $this->messages);
-        $validation->validate();
-        if ($validation->fails()) {
-            $errors = $validation->errors();
-            if ($errors->count() > 0) {
-                $errorMsg = current(current($errors->toArray()));
-            } else {
-                $errorMsg = 'unknown error';
-            }
-            throw new \Exception($errorMsg);
-        } else {
-            $this->params = $validation->getValidatedData();
-            return true;
-        }
+        $validate = new Validate($this->params, $this->rules, $this->messages);
+        $validate->validate();
+        $this->params = $validate->getParams();
     }
 }

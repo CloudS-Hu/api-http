@@ -65,22 +65,19 @@ class Client
      * @param LoggerInterface $logger
      * @throws \Exception
      */
-    public function __construct(Api $api, $config = [], LoggerInterface $logger = null)
+    public function __construct(Api $api = null, array $config = [], LoggerInterface $logger = null)
     {
-        //先进行api的参数校验
-        $api->validate();
-        $this->api = $api;
-        $this->params = $api->getParams();
-        $this->method = $api->getMethod();
-        $this->uri = $api->getUri();
         $this->baseUri = !empty($config['base_uri']) ? $config['base_uri'] : '/';
         $this->headers = !empty($config['headers']) ? $config['headers'] : [
             'Accept-Encoding' => 'gzip',
             'Connection' => 'keep-alive'
         ]; // 头部参数
-        mergeInto($this->headers, $api->getHeaders());
+        if (null !== $api) {
+            $this->api = $api;
+            $this->handleApiSet();
+        }
         $this->config = [
-            'timeout' => isset($config['timeout']) ? $config['timeout'] : 30, // 超时时间
+            'timeout' => isset($config['timeout']) ? $config['timeout'] : 10, // 超时时间
             'connect_timeout' => isset($config['connect_timeout']) ? $config['connect_timeout'] : 3, // 连接超时，单位秒
             'max_retries' => isset($config['max_retries']) ? $config['max_retries'] : 1, // 重试次数
             'retry_interval' => isset($config['retry_interval']) ? $config['retry_interval'] : 1000, // 重试间隔，毫秒
@@ -102,6 +99,32 @@ class Client
     }
 
     /**
+     * api设置时的初始处理
+     * @throws \Exception
+     */
+    private function handleApiSet()
+    {
+        // 参数校验
+        $this->api->validate();
+        $this->params = $this->api->getParams();
+        $this->method = $this->api->getMethod();
+        $this->uri = $this->api->getUri();
+        mergeInto($this->headers, $this->api->getHeaders());
+    }
+
+    /**
+     * @param Api $api
+     * @return $this
+     * @throws \Exception
+     */
+    public function setApi(Api $api)
+    {
+        $this->api = $api;
+        $this->handleApiSet();
+        return $this;
+    }
+
+    /**
      * @param $baseUri
      * @return $this
      */
@@ -116,7 +139,7 @@ class Client
      *
      * @throws \Exception
      */
-    protected function pushLog()
+    private function pushLog()
     {
         // 日志格式为
         // ">>>>>>>>\n{request}\n<<<<<<<<\n{response}\n--------\n{error}"
@@ -129,7 +152,7 @@ class Client
      * @return LoggerInterface
      * @throws \Exception
      */
-    protected function getLogger(): LoggerInterface
+    private function getLogger(): LoggerInterface
     {
         if (!($this->logger instanceof LoggerInterface)) {
             // 这里使用 php 临时文件进行存储，最多允许使用 0.5MB 内存
@@ -152,7 +175,7 @@ class Client
      *
      * @return $this
      */
-    public function pushRetry()
+    private function pushRetry()
     {
         $this->handlerStack->push(Middleware::retry(function (
             $retries,
@@ -215,22 +238,41 @@ class Client
     }
 
     /**
+     * @return string
+     */
+    public function getUri()
+    {
+        return $this->baseUri . $this->uri;
+    }
+
+    /**
      * 发起请求
      *
+     * @return mixed
+     * @throws BadRequestException
      * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Exception
      */
     public function request()
     {
+        if (strtolower($this->method) === 'get') {
+            $options['query'] = $this->params;
+        } else {
+            if (isset($this->headers['Content-Type']) && false !== stripos($this->headers['Content-Type'], 'json')) {
+                $options['json'] = $this->params;
+            } else {
+                $options['form_params'] = $this->params;
+            }
+        }
+        $options['headers'] = $this->headers;
         try {
             $response = $this->httpClient->request(
                 $this->method,
                 $this->baseUri . $this->uri,
-                [
-                    'form_params' => $this->params,
-                    'headers' => $this->headers
-                ]
+                $options
             );
+            if (($statusCode = (int)$response->getStatusCode()) !== 200) {
+                throw new \Exception('API 响应异常', $statusCode);
+            }
             $body = $response->getBody();
             return @json_decode($body, true);
         } catch (\Exception $e) {

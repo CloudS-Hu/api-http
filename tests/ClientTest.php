@@ -20,13 +20,18 @@ class ClientTest extends TestCase
         $api->setUri('/v1/login/access_token')
             ->setMethod('post')
             ->addParam('partner_id', 'yzjf')
-            ->setRules(['partner_id' => 'required'])
+            ->addParam('mobile', '13800138000')
+            ->setRules(['partner_id' => 'required', 'mobile' => 'required|mobile'])
             ->setHeaders([
                 'authorization' => 'Basic bW9jaG91OjAzZjg4M2NmMGNhMTQ4NjgyMzczODI0NTZmZGFhZTI3',
                 'Content-Type' => 'application/x-www-form-urlencoded'
             ]);
+        $logPath = 'tests/log/';
+        if (!realpath($logPath)) {
+            mkdir($logPath);
+        }
         // 日志对象
-        $stream = fopen('log/' . date('Y-m-d') . '.log', 'a+');
+        $stream = fopen($logPath . date('Y-m-d') . '.log', 'a+');
         $streamHandler = new StreamHandler($stream);
         $logger = new Logger('api-http');
         $logger->pushHandler($streamHandler);
