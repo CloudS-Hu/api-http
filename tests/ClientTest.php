@@ -30,6 +30,7 @@ class ClientTest extends TestCase
         if (!realpath($logPath)) {
             mkdir($logPath);
         }
+
         // 日志对象
         $stream = fopen($logPath . date('Y-m-d') . '.log', 'a+');
         $streamHandler = new StreamHandler($stream);
