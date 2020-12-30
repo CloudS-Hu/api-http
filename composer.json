@@ -1,17 +1,19 @@
 {
     "name": "clouds-hu/api-http",
     "description": "The api http",
+    "license": "MIT",
     "authors": [
         {
             "name": "clouds.hu",
-            "email": "clouds.hu@qq.com"
+            "email": "clouds.hu@foxmail.com"
         }
     ],
     "require": {
         "php": ">=7.0",
         "guzzlehttp/guzzle": "~6.0",
         "monolog/monolog": ">=1.23.0",
-        "rakit/validation": "^0.22.0"
+        "rakit/validation": "*",
+        "ext-json": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "*"
@@ -19,8 +21,7 @@
     "autoload": {
         "files": ["src/functions.php"],
         "psr-4": {
-            "CloudS\\Hu\\Api\\Http\\": "src"
+            "CloudS\\Hu\\Api\\Http\\": "src/"
         }
-    },
-    "license": "MIT"
+    }
 }

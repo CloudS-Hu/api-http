@@ -3,7 +3,7 @@
 namespace CloudS\Hu\Api\Http;
 
 use CloudS\Hu\Api\Http\exceptions\ApiValidateException;
-use Rakit\Validation\Validator;
+use CloudS\Hu\Api\Http\validator\Validator;
 
 /**
  * Class Api

@@ -65,7 +65,7 @@ class Client
      * @param LoggerInterface $logger
      * @throws \Exception
      */
-    public function __construct(Api $api = null, Array $config = [], LoggerInterface $logger = null)
+    public function __construct(Api $api = null, array $config = [], LoggerInterface $logger = null)
     {
         $this->baseUri = !empty($config['base_uri']) ? $config['base_uri'] : '/';
         $this->headers = !empty($config['headers']) ? $config['headers'] : [
@@ -248,8 +248,9 @@ class Client
     /**
      * 发起请求
      *
+     * @return mixed
+     * @throws BadRequestException
      * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Exception
      */
     public function request()
     {
