@@ -12,7 +12,7 @@
         "php": ">=7.0",
         "guzzlehttp/guzzle": "~6.0",
         "monolog/monolog": ">=1.23.0",
-        "rakit/validation": "*",
+        "rakit/validation": "^0.22.0",
         "ext-json": "*"
     },
     "require-dev": {
